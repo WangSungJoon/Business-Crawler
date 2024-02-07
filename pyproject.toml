@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "business crawler"
+version = "0.1.0"
+description = ""
+authors = ["sjwang <sjwang@ksystem.co.kr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+selenium-wire = "^5.1.0"
+openai = "^1.10.0"
+fake-useragent = "^1.4.0"
+webdriver-manager = "^4.0.1"
+sqlalchemy = "^2.0.25"
+psycopg2-binary = "^2.9.9"
+python-dotenv = "^1.0.1"
+pandas = "^2.2.0"
+datetime = "^5.4"
+jinja2 = "^3.1.3"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
