@@ -2,7 +2,7 @@ _GREET_PROMPT = """너는 매일 아침 새로운 게시된 사업 공고문을 
 예의 있는 말투로 다음 내용을 포함한 짧은 코멘트를 작성해.
 - K-Bot 이름을 언급한 자기 소개 한 문장
 - AI경영분석에서 제작된 AI기반 자동화 수집 프로그램으로 수집됨.
-- 오늘은 <span class="blue">{new_articles_num}개</span> 새로운 공고가 수집됨.
+- 오늘은 <span class="point">{new_articles_num}개</span> 새로운 공고가 수집됨.
 - 하루를 응원하는 한 줄 코멘트.
 * 줄바꿈을 적절히 사용하세요.
 """
@@ -278,7 +278,7 @@ WEBSITES = {
         "css_pages": "#BbsContentFVo > div.board > ul > li > a",
         "inner_href": {
             "css_href": "td.left > a",
-            "url_src": """f\'\'\'https://www.sw.or.kr/{btn_href.get_attribute("onclick")}\'\'\'""",
+            "url_src": """btn_href.get_attribute("href")""",
         },
     },
     "한국정보산업연합회": {

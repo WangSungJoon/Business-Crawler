@@ -1,21 +1,91 @@
 <!DOCTYPE html>
-    <html>
-        <style>
-            .blue {
-                color: blue;
-            }
-        </style>
-        <body>
-            <div>{{ content_greet }}</div>
-            <br><br>
-            <div>{{ content_body }}</div>
-        </body>
-    </html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Instagram Activity Report</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            letter-spacing: 0.02em;
+            padding: 50px;
+        }
 
-    <!-- 추가 이메일 내용 샘플  -->
-    <!-- <div>
-        <ul>
-            <li></li><br>
-        </ul><br>
-        -------------- 본문 --------------<br><br><br>
-    </div> -->
+        
+        table{
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(23, 23, 23, 0.8);
+        }
+        table.main{
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: white;
+            margin-bottom: 0px;
+        }
+        .point{
+            color: white;
+        }
+
+        div.content{
+            padding: 20px;
+            border-radius: 10px;
+        }
+        div.content.greet {
+            color: #c7c7c7;
+        }
+        div.content.body {
+            line-height: 1.7;
+            background-color: rgba(23, 23, 23);
+            color: #c7c7c7;
+        }
+        div.content.body b{
+            color:white
+        }
+
+        a {
+            font-size: 14px;
+            color: #eeeeee;
+            text-decoration: none;
+        }
+        a:visited {
+            color: rgb(64, 64, 64); /* 방문한 링크 색상 */
+            text-decoration: none; /* 밑줄 제거 */
+        }
+
+        td.footer .text {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <table class="main">
+        <tr>
+            <td>
+                <h2>AI Business Articles</h2>
+                <div class="content greet">{{ content_greet }}</div>
+                <div class="content body">{{ content_body }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="footer">
+        <tr>
+            <td class="text">
+                <small>
+                    <a href="#" target="_blank">Privacy Policy</a>  •  <a href="#" target="_blank">Terms of Use</a>
+                </small>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

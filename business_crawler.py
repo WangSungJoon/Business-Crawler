@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import smtplib
+import sys
 import time
 import traceback
 from datetime import datetime
@@ -243,17 +244,17 @@ class BusinessCrawler:
         content_body = ""
 
         for website in new_articles:
-            content_ul = f"""<b>{website}</b>{f" {len(new_articles[website])}개" if len(new_articles[website])>0 else ""}
+            content_ul = f"""<b>{website}{f" {len(new_articles[website])}개</b>" if len(new_articles[website])>0 else "</b>"}
             <ul>"""
             if len(new_articles[website])>0:
                 for article in new_articles[website]:
                     keyword_comment=f"<b>[{", ".join(article["keywords"])}]</b> - " if len(article["keywords"]) > 0 else ""                        
-                    content_ul+=f"""<li>{keyword_comment}<a href="{article["url"]}">{article["title"]}</a></li><br>"""
+                    content_ul+=f"""<li>{keyword_comment}<a href="{article["url"]}">{article["title"]}</a></li>"""
             else:
-                content_ul+="<li>새로 게시된 글이 없습니다.</li><br>"
+                content_ul+="<li>새로 게시된 글이 없습니다.</li>"
 
             content_ul += """
-            </ul><br>
+            </ul>
             """
             content_body+=content_ul
 
@@ -277,8 +278,10 @@ class BusinessCrawler:
         current_datetime = datetime.now().strftime("%Y%m%d%H%M%S")
         subject = f"""[사업공고 크롤링] {error_msg}"""  
 
+        current_date = datetime.now().strftime("%Y%m%d")
+        log_folder_path = os.path.join(self.logs_folder, current_date)
         with open(
-            os.path.join(self.logs_folder, "err_html.html"), "w", encoding="utf-8"
+            os.path.join(log_folder_path, "err_html.html"), "w", encoding="utf-8"
         ) as output_file:
             with open(os.path.join(self.script_path, "src/j2_err_template.html")) as template_file:
                 j2_template = Template(template_file.read())
@@ -322,7 +325,7 @@ class BusinessCrawler:
         try:
             start_time = time.time()
 
-            collect_list = []
+            new_articles = []
             collect_titles = []
             continue_flag = True
             website_src = config.WEBSITES[website_title]
@@ -432,7 +435,7 @@ class BusinessCrawler:
 
                     # self.logger.info(collect_dict)
 
-                    collect_list.append(collect_dict)
+                    new_articles.append(collect_dict)
                     article_idx += 1
                 page += 1
 
@@ -441,10 +444,10 @@ class BusinessCrawler:
                 f"""{f"{runtime//60}분 " if runtime//60>0  else ""}{runtime%60}초."""
             )
             self.logger.info(
-                f"""{website_title} : {len(collect_list)} Articles Collected. runtime : {runtime}"""
+                f"""{website_title} : {len(new_articles)} Articles Collected. runtime : {runtime}"""
             )
 
-            return collect_list
+            return new_articles
         except Exception:
             error_msg = f"""{website_title} 수집 중 알 수 없는 에러가 발생하였습니다."""
             error_traceback = f"{traceback.format_exc()}"
@@ -458,7 +461,7 @@ class BusinessCrawler:
         for website in new_articles:
             new_articles_num+=len(new_articles[website])
         subject = f"[{datetime.now().strftime("%Y-%m-%d")}] 새로 게시된 {new_articles_num}개 사업 공고 게시글이 있어요!"
-
+        
         # 수집 키워드 정리
         collected_keywords=[]
         for website in new_articles:
@@ -469,14 +472,14 @@ class BusinessCrawler:
 
         # greet 생성
         greet_prompt = config._GREET_PROMPT.format(
-            new_articles_num=new_articles_num)
-        
+            new_articles_num=new_articles_num)            
+
         # 수집된 키워드가 있을 경우 프롬프트 추가
         if len(collected_keywords) > 0:
             greet_prompt += f"""
 그리고 오늘은 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
-- 키워드 들은 <span class="blue"></span> 태그로 감싸서 대답해"""
-            
+- 키워드 들은 <span class="point"></span> 태그로 감싸서 대답해"""
+
         messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
         content_greet = self.openai_create_nonstream(messages)
         content_greet = self.gpt_trimmer(content_greet)
@@ -485,8 +488,10 @@ class BusinessCrawler:
         # articles
         content_body = self.make_content(new_articles)
 
+        current_date = datetime.now().strftime("%Y%m%d")
+        log_folder_path = os.path.join(self.logs_folder, current_date)
         with open(
-            os.path.join(self.logs_folder, "email_html.html"), "w", encoding="utf-8"
+            os.path.join(log_folder_path, "email_html.html"), "w", encoding="utf-8"
         ) as output_file:
             with open(os.path.join(self.script_path, "src/j2_template.html")) as template_file:
                 j2_template = Template(template_file.read())
@@ -498,13 +503,86 @@ class BusinessCrawler:
 
         # 보내는 이메일 리스트 로드
         to_email_list, cc_email_list=self.load_to_email_list()
-        # to_email_list=["sjwang@ksystem.co.kr"]
-        # cc_email_list=[]
 
         # 이메일 발송
         self.send_email(to_email_list, cc_email_list, subject, email_html_src)
 
 
+    def test(self):
+        self.logger.info("Operating Test Process")
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        insert_query = f"""
+        SELECT website, title, keywords, url FROM mart.business_articles
+        WHERE collected_datetime >= '{today}'
+        ORDER BY collected_datetime
+        """
+
+        result = business_crawler.execute_query(insert_query)
+
+        new_articles={}
+        for row in result:
+            if row[0] not in new_articles:
+                new_articles[row[0]]=[]
+                
+            temp_list={}
+            temp_list["title"]=row[1]
+            temp_list["keywords"]=row[2].split(", ") if row[2] != "" else []
+            temp_list["url"]=row[3]
+            new_articles[row[0]].append(temp_list)
+            
+        # 이메일 제목
+        new_articles_num=0
+        for website in new_articles:
+            new_articles_num+=len(new_articles[website])
+        subject = f"[{datetime.now().strftime("%Y-%m-%d")}] 새로 게시된 {new_articles_num}개 사업 공고 게시글이 있어요!"
+        
+        # 수집 키워드 정리
+        collected_keywords=[]
+        for website in new_articles:
+            for article in new_articles[website]:
+                collected_keywords.extend(article["keywords"])
+        collected_keywords = list(set(collected_keywords))
+        self.logger.info(f"""Today's Collected Keywords : {collected_keywords}""")
+
+        # greet 생성
+        greet_prompt = config._GREET_PROMPT.format(
+            new_articles_num=new_articles_num)            
+
+        # 수집된 키워드가 있을 경우 프롬프트 추가
+        if len(collected_keywords) > 0:
+            greet_prompt += f"""
+그리고 오늘은 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
+- 키워드 들은 <span class="point"></span> 태그로 감싸서 대답해"""
+
+        messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
+        content_greet = self.openai_create_nonstream(messages)
+        content_greet = self.gpt_trimmer(content_greet)
+        self.logger.info(f"""Generated Greet : {content_greet}""")
+
+        # articles
+        content_body = self.make_content(new_articles)
+
+        current_date = datetime.now().strftime("%Y%m%d")
+        log_folder_path = os.path.join(self.logs_folder, current_date)
+        with open(
+            os.path.join(log_folder_path, "email_html.html"), "w", encoding="utf-8"
+        ) as output_file:
+            with open(os.path.join(self.script_path, "src/j2_template.html")) as template_file:
+                j2_template = Template(template_file.read())
+                email_html_src = j2_template.render(
+                    content_greet=content_greet,
+                    content_body=content_body,
+                )
+                output_file.write(email_html_src)
+
+        # 보내는 이메일 리스트 로드
+        to_email_list=["sjwang@ksystem.co.kr"]
+        cc_email_list=[]
+
+        # 이메일 발송
+        self.send_email(to_email_list, cc_email_list, subject, email_html_src)
+        
     def run(self):
         try:
             self.logger.info("Operating Business Crawling.")
@@ -545,6 +623,11 @@ class BusinessCrawler:
 
 
 if __name__ == "__main__":
+    test = sys.argv[1]
+
     business_crawler = BusinessCrawler()
 
-    business_crawler.run()
+    if test : 
+        business_crawler.test()
+    else:
+        business_crawler.run()
