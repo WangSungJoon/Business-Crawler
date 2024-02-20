@@ -623,11 +623,12 @@ class BusinessCrawler:
 
 
 if __name__ == "__main__":
-    test = sys.argv[1]
+    execute = sys.argv[1]
 
     business_crawler = BusinessCrawler()
 
-    if test : 
-        business_crawler.test()
-    else:
+    if execute == "Service" : 
         business_crawler.run()
+    elif execute == "TEST" : 
+        business_crawler.test()
+
