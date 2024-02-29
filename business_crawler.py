@@ -187,7 +187,7 @@ class BusinessCrawler:
     def gpt_trimmer(self, answer):
         answer = answer.replace("\n", "<br>")
         answer = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", answer)
-        answer = answer.replace("#", "")
+        # answer = answer.replace("""<span class="point">""", """<span style="color:#6968EC;font-weight:bold;">""")
         # answer = re.sub(r"####(.*?)<br>", r"<h4>\1<br>", answer)
         # answer = re.sub(r"###(.*?)<br>", r"<h3>\1<br>", answer)
         # answer = re.sub(r"##(.*?)<br>", r"<h2>\1<br>", answer)
@@ -244,18 +244,43 @@ class BusinessCrawler:
         content_body = ""
 
         for website in new_articles:
-            content_ul = f"""<b>{website}{f" {len(new_articles[website])}개</b>" if len(new_articles[website])>0 else "</b>"}
-            <ul>"""
+            # content_ul = f"""<b>{website}{f" {len(new_articles[website])}개</b>" if len(new_articles[website])>0 else "</b>"}
+            # <br><ul>"""
+            # if len(new_articles[website])>0:
+            #     for article in new_articles[website]:
+            #         keyword_comment=f"""<b>[{", ".join(article["keywords"])}]</b> - """ if len(article["keywords"]) > 0 else ""                        
+            #         content_ul+=f"""<li>{keyword_comment}<a href="{article["url"]}">{article["title"]}</a></li>"""
+            # else:
+            #     content_ul+="<li>새로 게시된 글이 없습니다.</li>"
+            # content_ul += """
+            # </ul><br>
+            # """
             if len(new_articles[website])>0:
+                content_ul = f"""
+    <h6 style="margin-top:40px;margin-left:20px;margin-bottom:10px;font-family:'Malgun Gothic', 'Apple SD Gothic Neo';font-size:16px;color:#333;letter-spacing:-.05em;">{website}{f" {len(new_articles[website])}개</h6>" if len(new_articles[website])>0 else "</h6>"}
+    <table width="1200" border="1" style="margin-left:20px;border-collapse:collapse;border:1px solid #d3d3d3;font-family:'Malgun Gothic', 'Apple SD Gothic Neo';font-size:13px;letter-spacing:-.05em;">
+        <colgroup>
+            <col width="200"/>
+            <col width="*"/>
+        </colgroup>
+        <thead>
+            <tr style="height:40px;background-color:#f4f4f4;color:#222;">
+                <th style="border-color:#e4e5e7;border-top:2px solid #333;">키워드</th>
+                <th style="border-color:#e4e5e7;border-top:2px solid #333;">모집공고 바로가기</th>
+            </tr>
+        </thead>
+        <tbody style="text-indent:5px;">"""
                 for article in new_articles[website]:
-                    keyword_comment=f"<b>[{", ".join(article["keywords"])}]</b> - " if len(article["keywords"]) > 0 else ""                        
-                    content_ul+=f"""<li>{keyword_comment}<a href="{article["url"]}">{article["title"]}</a></li>"""
+                    keyword_comment=f"""<b>{", ".join(article["keywords"])}</b>""" if len(article["keywords"]) > 0 else "&nbsp;"                        
+                    content_ul+=f"""<tr style="height:40px;">
+            <th style="border-color:#e4e5e7">{keyword_comment}</th>
+            <td style="border-color:#e4e5e7">♾️ <a href="{article["url"]}" style="color:#333">{article["title"]}</a></td>
+        </tr>"""
+                content_ul+="""
+        </tbody>
+    </table>"""
             else:
-                content_ul+="<li>새로 게시된 글이 없습니다.</li>"
-
-            content_ul += """
-            </ul>
-            """
+                content_ul="""<h6 style="margin-top:40px;margin-left:20px;margin-bottom:10px;font-family:'Malgun Gothic', 'Apple SD Gothic Neo';font-size:16px;color:#333;letter-spacing:-.05em;">서울테크노파크 - <span style="color:#999;font-size:14px;">❌ 새로 게시된 글이 없습니다.</span></h6>"""
             content_body+=content_ul
 
         return content_body
@@ -470,15 +495,18 @@ class BusinessCrawler:
         collected_keywords = list(set(collected_keywords))
         self.logger.info(f"""Today's Collected Keywords : {collected_keywords}""")
 
+        # 수집된 키워드가 있을 경우 프롬프트 추가
+        keywords_prompt = ""
+        if len(collected_keywords) > 0:
+            keywords_prompt = f"""
+그리고 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
+- 키워드 들은 <span style="color:#6968EC;font-weight:bold;"></span> 태그로 감싸서 대답해"""
+            
         # greet 생성
         greet_prompt = config._GREET_PROMPT.format(
-            new_articles_num=new_articles_num)            
-
-        # 수집된 키워드가 있을 경우 프롬프트 추가
-        if len(collected_keywords) > 0:
-            greet_prompt += f"""
-그리고 오늘은 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
-- 키워드 들은 <span class="point"></span> 태그로 감싸서 대답해"""
+            new_articles_num=new_articles_num,
+            keywords_prompt=keywords_prompt
+        )
 
         messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
         content_greet = self.openai_create_nonstream(messages)
@@ -493,7 +521,7 @@ class BusinessCrawler:
         with open(
             os.path.join(log_folder_path, "email_html.html"), "w", encoding="utf-8"
         ) as output_file:
-            with open(os.path.join(self.script_path, "src/j2_template.html")) as template_file:
+            with open(os.path.join(self.script_path, "src/j2_template_inline.html")) as template_file:
                 j2_template = Template(template_file.read())
                 email_html_src = j2_template.render(
                     content_greet=content_greet,
@@ -544,17 +572,20 @@ class BusinessCrawler:
                 collected_keywords.extend(article["keywords"])
         collected_keywords = list(set(collected_keywords))
         self.logger.info(f"""Today's Collected Keywords : {collected_keywords}""")
+        
+        # 수집된 키워드가 있을 경우 프롬프트 추가
+        keywords_prompt = ""
+        if len(collected_keywords) > 0:
+            keywords_prompt = f"""
+그리고 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
+- 키워드 들은 <span style="color:#6968EC;font-weight:bold;"></span> 태그로 감싸서 대답해"""
 
         # greet 생성
         greet_prompt = config._GREET_PROMPT.format(
-            new_articles_num=new_articles_num)            
-
-        # 수집된 키워드가 있을 경우 프롬프트 추가
-        if len(collected_keywords) > 0:
-            greet_prompt += f"""
-그리고 오늘은 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
-- 키워드 들은 <span class="point"></span> 태그로 감싸서 대답해"""
-
+            new_articles_num=new_articles_num,
+            keywords_prompt=keywords_prompt
+        )
+        
         messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
         content_greet = self.openai_create_nonstream(messages)
         content_greet = self.gpt_trimmer(content_greet)
@@ -568,7 +599,7 @@ class BusinessCrawler:
         with open(
             os.path.join(log_folder_path, "email_html.html"), "w", encoding="utf-8"
         ) as output_file:
-            with open(os.path.join(self.script_path, "src/j2_template.html")) as template_file:
+            with open(os.path.join(self.script_path, "src/j2_template_inline.html")) as template_file:
                 j2_template = Template(template_file.read())
                 email_html_src = j2_template.render(
                     content_greet=content_greet,
@@ -577,6 +608,10 @@ class BusinessCrawler:
                 output_file.write(email_html_src)
 
         # 보내는 이메일 리스트 로드
+        # to_email_list, cc_email_list=self.load_to_email_list()
+        # sjwang@ksystem.co.kr
+        # jslee2108@ksystem.co.kr
+        # jhkim1910@ksystem.co.kr
         to_email_list=["sjwang@ksystem.co.kr"]
         cc_email_list=[]
 
@@ -631,4 +666,5 @@ if __name__ == "__main__":
         business_crawler.run()
     elif execute == "TEST" : 
         business_crawler.test()
-
+    else:
+        business_crawler.logger.warning("Executor Is Not Proper")

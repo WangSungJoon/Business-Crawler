@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,76 +17,65 @@
             padding: 50px;
         }
 
-        
-        table{
+        div.main {
             width: 100%;
             height: 100%;
-            padding: 20px;
+            padding: 0px 20px 0px 20px;
             border-radius: 10px;
-            background-color: rgba(23, 23, 23, 0.8);
-        }
-        table.main{
-            margin-bottom: 20px;
+            background-color: rgba(212, 212, 212, 0.8);
         }
 
         h2 {
-            color: white;
+            /* color: white; */
             margin-bottom: 0px;
         }
-        .point{
-            color: white;
+
+        .point {
+            color: blue;
         }
 
-        div.content{
-            padding: 20px;
+        div.content {
             border-radius: 10px;
+            padding: 0px 20px 0px 20px;
         }
+
         div.content.greet {
-            color: #c7c7c7;
+            /* color: #c7c7c7; */
         }
+
         div.content.body {
-            line-height: 1.7;
-            background-color: rgba(23, 23, 23);
-            color: #c7c7c7;
+            /* color: #c7c7c7; */
+            font-size: 14px;
+            line-height: 1.8;
+            background-color: rgba(212, 212, 212);
         }
-        div.content.body b{
-            color:white
+
+        div.content.body b {
+            /* color: white */
         }
 
         a {
             font-size: 14px;
-            color: #eeeeee;
+            color: black;
             text-decoration: none;
         }
-        a:visited {
-            color: rgb(64, 64, 64); /* 방문한 링크 색상 */
-            text-decoration: none; /* 밑줄 제거 */
-        }
 
-        td.footer .text {
-            text-align: left;
+        a:hover {
+            color: blue;
         }
     </style>
 </head>
-<body>
-    <table class="main">
-        <tr>
-            <td>
-                <h2>AI Business Articles</h2>
-                <div class="content greet">{{ content_greet }}</div>
-                <div class="content body">{{ content_body }}</div>
-            </td>
-        </tr>
-    </table>
 
-    <table class="footer">
-        <tr>
-            <td class="text">
-                <small>
-                    <a href="#" target="_blank">Privacy Policy</a>  •  <a href="#" target="_blank">Terms of Use</a>
-                </small>
-            </td>
-        </tr>
-    </table>
+<body>
+    <div class="main">
+        <br>
+        <h2>AI Business Articles</h2>
+        <br>
+        <div class="content greet">{{ content_greet }}</div>
+        <br>
+        <div class="content body">{{ content_body }}</div>
+        <br>
+    </div>
 </body>
+
 </html>
