@@ -280,7 +280,7 @@ class BusinessCrawler:
         </tbody>
     </table>"""
             else:
-                content_ul="""<h6 style="margin-top:40px;margin-left:20px;margin-bottom:10px;font-family:'Malgun Gothic', 'Apple SD Gothic Neo';font-size:16px;color:#333;letter-spacing:-.05em;">서울테크노파크 - <span style="color:#999;font-size:14px;">❌ 새로 게시된 글이 없습니다.</span></h6>"""
+                content_ul="""<h6 style="margin-top:40px;margin-left:20px;margin-bottom:10px;font-family:'Malgun Gothic', 'Apple SD Gothic Neo';font-size:16px;color:#333;letter-spacing:-.05em;">{website} - <span style="color:#999;font-size:14px;">❌ 새로 게시된 글이 없습니다.</span></h6>"""
             content_body+=content_ul
 
         return content_body
