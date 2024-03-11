@@ -267,6 +267,7 @@ class BusinessCrawler:
             <tr style="height:40px;background-color:#f4f4f4;color:#222;">
                 <th style="border-color:#e4e5e7;border-top:2px solid #333;">키워드</th>
                 <th style="border-color:#e4e5e7;border-top:2px solid #333;">모집공고 바로가기</th>
+                <th style="border-color:#e4e5e7;border-top:2px solid #333;">등록일</th>
             </tr>
         </thead>
         <tbody style="text-indent:5px;">"""
@@ -275,6 +276,7 @@ class BusinessCrawler:
                     content_ul+=f"""<tr style="height:40px;">
             <th style="border-color:#e4e5e7">{keyword_comment}</th>
             <td style="border-color:#e4e5e7">♾️ <a href="{article["url"]}" style="color:#333">{article["title"]}</a></td>
+            <th style="border-color:#e4e5e7">{article["date"]}</th>
         </tr>"""
                 content_ul+="""
         </tbody>
@@ -536,12 +538,12 @@ class BusinessCrawler:
         self.send_email(to_email_list, cc_email_list, subject, email_html_src)
 
 
-    def test(self):
+    def test(self, GPT_flag):
         self.logger.info("Operating Test Process")
         today = datetime.now().strftime("%Y-%m-%d")
 
         insert_query = f"""
-        SELECT website, title, keywords, url FROM mart.business_articles
+        SELECT website, title, date, keywords, url FROM mart.business_articles
         WHERE collected_datetime >= '{today}'
         ORDER BY collected_datetime
         """
@@ -549,14 +551,15 @@ class BusinessCrawler:
         result = business_crawler.execute_query(insert_query)
 
         new_articles={}
-        for row in result:
-            if row[0] not in new_articles:
-                new_articles[row[0]]=[]
-                
+        for key in list(config.WEBSITES.keys()):
+            new_articles[key]=[]
+
+        for row in result:                
             temp_list={}
             temp_list["title"]=row[1]
-            temp_list["keywords"]=row[2].split(", ") if row[2] != "" else []
-            temp_list["url"]=row[3]
+            temp_list["date"]=row[2]
+            temp_list["keywords"]=row[3].split(", ") if row[3] != "" else []
+            temp_list["url"]=row[4]
             new_articles[row[0]].append(temp_list)
             
         # 이메일 제목
@@ -573,23 +576,26 @@ class BusinessCrawler:
         collected_keywords = list(set(collected_keywords))
         self.logger.info(f"""Today's Collected Keywords : {collected_keywords}""")
         
-        # 수집된 키워드가 있을 경우 프롬프트 추가
-        keywords_prompt = ""
-        if len(collected_keywords) > 0:
-            keywords_prompt = f"""
-그리고 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
-- 키워드 들은 <span style="color:#6968EC;font-weight:bold;"></span> 태그로 감싸서 대답해"""
+        if(GPT_flag):
+            # 수집된 키워드가 있을 경우 프롬프트 추가
+            keywords_prompt = ""
+            if len(collected_keywords) > 0:
+                keywords_prompt = f"""
+    그리고 {", ".join(collected_keywords)} 키워드를 포함한 공고들이 게시되었으니 관심있게 볼 것을 제안해
+    - 키워드 들은 <span style="color:#6968EC;font-weight:bold;"></span> 태그로 감싸서 대답해"""
 
-        # greet 생성
-        greet_prompt = config._GREET_PROMPT.format(
-            new_articles_num=new_articles_num,
-            keywords_prompt=keywords_prompt
-        )
-        
-        messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
-        content_greet = self.openai_create_nonstream(messages)
-        content_greet = self.gpt_trimmer(content_greet)
-        self.logger.info(f"""Generated Greet : {content_greet}""")
+            # greet prompt 생성
+            greet_prompt = config._GREET_PROMPT.format(
+                new_articles_num=new_articles_num,
+                keywords_prompt=keywords_prompt
+            )
+            
+            messages=[{"role":"system", "name":"KBot", "content":greet_prompt}]
+            content_greet = self.openai_create_nonstream(messages)
+            content_greet = self.gpt_trimmer(content_greet)
+            self.logger.info(f"""Generated Greet : {content_greet}""")
+        else:
+            content_greet=config.GREET_SAMPLE
 
         # articles
         content_body = self.make_content(new_articles)
@@ -665,6 +671,7 @@ if __name__ == "__main__":
     if execute == "Service" : 
         business_crawler.run()
     elif execute == "TEST" : 
-        business_crawler.test()
+        GPT_flag = int(sys.argv[2])
+        business_crawler.test(GPT_flag)
     else:
         business_crawler.logger.warning("Executor Is Not Proper")

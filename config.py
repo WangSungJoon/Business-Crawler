@@ -244,16 +244,16 @@ WEBSITES = {
         },
     },
     "한국산업기술진흥협회": {
-        "url": "https://www.koita.or.kr/board/commBoardNotice003List.do",
-        "css_articles": "#contents > article > div > div > div > div.cnt_s > div.x_tb_w > table > tbody > tr",
+        "url": "https://kosmia.or.kr/board/list.php?M2_IDX=29640",
+        "css_articles": "div.koiia-wrap-list > table > tbody > tr",
         "init_article_idx": 0,
-        "css_title": "td:nth-child(2) > a",
-        "css_date": "td.td_date",
+        "css_title": "td.link > a",
+        "css_date": "td:nth-child(3)",
         "init_page_idx": 0,
         "css_pages": "#paging > ol > li > a",
         "inner_href": {
-            "css_href": "td:nth-child(2) > a",
-            "url_src": """f"https://www.koita.or.kr/board/{btn_href.get_attribute("href").split("'")[1]}.do?page={page}&no={btn_href.get_attribute("href").split(" ")[5]}" """,
+            "css_href": "td.link > a",
+            "url_src": """f"{btn_href.get_attribute("href")}" """,
         },
     },
     "한국산업지능화협회": {
@@ -335,3 +335,5 @@ WEBSITES = {
         },
     },
 }
+
+GREET_SAMPLE = """<p style="margin-left:20px;font-size:15px;letter-spacing:-.05em;">[SAMPLE]<br>안녕하세요, K-Bot입니다.<br><br>이 이메일은 AI경영분석에서 제작된 AI기반 자동화 수집 프로그램으로 오늘은 <span style="color:#6968EC;font-weight:bold;">83개</span>의 새로운 공고가 수집되었습니다.<br><br>특히 <span style="color:#6968EC;font-weight:bold;">공급기업</span>, <span style="color:#6968EC;font-weight:bold;">중소기업</span>, <span style="color:#6968EC;font-weight:bold;">혁신바우처</span>, <span style="color:#6968EC;font-weight:bold;">창업</span>, <span style="color:#6968EC;font-weight:bold;">지원사업</span>, <span style="color:#6968EC;font-weight:bold;">수요기업</span>, <span style="color:#6968EC;font-weight:bold;">창업기업</span>, <span style="color:#6968EC;font-weight:bold;">바우처</span>, <span style="color:#6968EC;font-weight:bold;">스마트공장</span> 키워드를 포함한 공고들이 게시되었으니 관심 있게 살펴보시기 바랍니다.<br><br>오늘도 성공적인 하루 되시길 바랍니다!<br>[SAMPLE]</p>"""
